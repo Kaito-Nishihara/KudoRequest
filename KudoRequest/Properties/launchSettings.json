@@ -1,10 +1,25 @@
 {
   "profiles": {
-    "KudoRequest": {
-      "commandName": "Project"
+    "KudoRequest (Development)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
     },
-    "Container (Dockerfile)": {
-      "commandName": "Docker"
+    "KudoRequest (Staging)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Staging"
+      }
+    },
+    "KudoRequest (Production)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Production"
+      }
     }
   }
 }
