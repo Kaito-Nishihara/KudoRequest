@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "KudoRequest": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
