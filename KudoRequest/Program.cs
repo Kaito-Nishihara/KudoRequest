@@ -56,6 +56,7 @@ class Program
                 {
                     // 3. WebJob を実行
                     await ExecuteWebJob(kuduUrl!, token);
+                    
                 }
                 else
                 {
@@ -72,6 +73,16 @@ class Program
         catch (Exception ex)
         {
             Console.WriteLine($"エラー発生: {ex.Message}");
+        }
+        Console.WriteLine("処理が完了しました。終了するには `end` と入力してください...");
+        while (true)
+        {
+            string? input = Console.ReadLine();
+            if (input?.Trim().ToLower() == "end")
+            {
+                break;
+            }
+            Console.WriteLine("終了するには `end` と入力してください...");
         }
     }
 
