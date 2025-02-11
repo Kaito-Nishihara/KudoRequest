@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using KudoRequest.Strategy;
+using KudoRequest;
 
 class Program
 {
@@ -29,9 +30,30 @@ class Program
 
             Console.WriteLine($"取得したトークン: {token.Substring(0, 20)}...\n");
 
-            var webJob = config["KuduSettings:WebJobType"];
+            var webJobs = config.GetSection("KuduSettings:WebJobs").Get<List<WebJob>>();
+            Console.WriteLine("実行する WebJob を選択してください:");
+            foreach (var job in webJobs!)
+            {
+                Console.WriteLine($"{job.Id}: {job.Name}");
+            }
 
-            var webjobStrategy = WebJobStrategyFactory.GetStrategy(webJob!);
+            Console.Write("選択（番号）: ");
+            string input = Console.ReadLine()!;
+
+            if (!int.TryParse(input, out int selectedId))
+            {
+                Console.WriteLine("無効な入力です。終了します。");
+                return;
+            }
+
+            // 選択した WebJob の `Name` を取得
+            var selectedJob = webJobs.FirstOrDefault(j => j.Id == selectedId);
+            if (selectedJob == null)
+            {
+                Console.WriteLine("選択された WebJob が見つかりません。");
+                return;
+            }
+            var webjobStrategy = WebJobStrategyFactory.GetStrategy(selectedJob.Name, webJobs);
             var param = webjobStrategy.SetParameter();
             if (string.IsNullOrWhiteSpace(param))
             {
@@ -44,10 +66,8 @@ class Program
             var confirmation = Console.ReadLine()?.Trim().ToLower();
             if (confirmation == "yes")
             {
-                // 2. Kudu API の URL 設定
-                var WebJobUrl = config["KuduSettings:WebJobUrl"];
 
-                var kuduUrl = $"{WebJobUrl}?arguments={param}";
+                var kuduUrl = $"{selectedJob.WebJobUrl}?arguments={param}";
                 Console.WriteLine("\nリクエストするURLに問題ないか確認してください。");
                 Console.WriteLine(kuduUrl);
                 Console.WriteLine("\nこの内容で WebJob を実行しますか？\nパラメーターURLに問題がないことを今一度ご確認ください。 (yes/no)");
@@ -135,7 +155,7 @@ class Program
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"\nWebJob 実行リクエストに成功しました。: {response.StatusCode}");
-                Console.WriteLine($"\nAzurePortal上で実行ログを確認してください。\n（※この機能は実行のリクエストを行うだけで、WebJobの処理が成功したわけではありません。）");
+                Console.WriteLine($"\nAzurePortal上で実行ログを確認してください。\n（この機能は実行のリクエストを行うだけで、WebJobの処理が成功したわけではありません。）");
             }
             else
             {
