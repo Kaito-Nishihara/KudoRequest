@@ -13,14 +13,12 @@ class Program
     {
         try
         {
-            Console.WriteLine($"WebJobへの実行リクエストを開始します。");
+            Console.WriteLine($"WebJobへの実行リクエストを開始します。\n");
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory()) // 実行ディレクトリを指定
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // JSON 設定を読み込む
                 .Build();
            
-            // 1. Azure CLI を使用して Bearer トークンを取得
-
             Console.WriteLine($"アクセストークンを取得します。");
             var token = await GetAzureAccessToken();
             if (string.IsNullOrEmpty(token))
@@ -29,15 +27,19 @@ class Program
                 return;
             }
 
-            Console.WriteLine($"取得したトークン: {token.Substring(0, 20)}...");
+            Console.WriteLine($"取得したトークン: {token.Substring(0, 20)}...\n");
 
             var webJob = config["KuduSettings:WebJobType"];
-            Console.WriteLine($"WebJob {webJob} を実行します。");
 
             var webjobStrategy = WebJobStrategyFactory.GetStrategy(webJob!);
             var param = webjobStrategy.SetParameter();
-            Console.WriteLine($"\n実行するパラメータ: {param}");
-            Console.WriteLine("この内容で WebJob を実行しますか？ (yes/no)");
+            if (string.IsNullOrWhiteSpace(param))
+            {
+                Console.WriteLine($"実行するパラメータが設定されていません。\nパラメータ未設定の状態で実行することはできません。");
+                return;
+            }
+            Console.WriteLine($"実行するパラメータ: {param}");
+            Console.WriteLine("このパラメーターで実行しますか？ (yes/no)");
 
             var confirmation = Console.ReadLine()?.Trim().ToLower();
             if (confirmation == "yes")
@@ -46,8 +48,20 @@ class Program
                 var WebJobUrl = config["KuduSettings:WebJobUrl"];
 
                 var kuduUrl = $"{WebJobUrl}?arguments={param}";
-                // 3. WebJob を実行
-                await ExecuteWebJob(kuduUrl!, token);
+                Console.WriteLine("\nリクエストするURLに問題ないか確認してください。");
+                Console.WriteLine(kuduUrl);
+                Console.WriteLine("\nこの内容で WebJob を実行しますか？\nパラメーターURLに問題がないことを今一度ご確認ください。 (yes/no)");
+                var confirmation2 = Console.ReadLine()?.Trim().ToLower();
+                if (confirmation2 == "yes")
+                {
+                    // 3. WebJob を実行
+                    await ExecuteWebJob(kuduUrl!, token);
+                }
+                else
+                {
+                    Console.WriteLine("処理をキャンセルしました。");
+                    return;
+                }
             }
             else
             {
@@ -61,7 +75,6 @@ class Program
         }
     }
 
-    // Azure CLI を実行して Bearer トークンを取得
     static async Task<string> GetAzureAccessToken()
     {
         try
@@ -99,7 +112,6 @@ class Program
         }
     }
 
-    // Kudu API を使用して WebJob を実行
     static async Task ExecuteWebJob(string kuduUrl, string token)
     {
         using (HttpClient client = new HttpClient())
@@ -111,8 +123,8 @@ class Program
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"WebJob 実行リクエストに成功しました。: {response.StatusCode}");
-                Console.WriteLine($"AzurePortal上でログを確認してください。");
+                Console.WriteLine($"\nWebJob 実行リクエストに成功しました。: {response.StatusCode}");
+                Console.WriteLine($"\nAzurePortal上で実行ログを確認してください。\n（※この機能は実行のリクエストを行うだけで、WebJobの処理が成功したわけではありません。）");
             }
             else
             {
