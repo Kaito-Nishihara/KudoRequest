@@ -2,7 +2,7 @@
 このコンソールアプリは、Azure WebJob を選択して起動し、実行パラメータを付与してリクエストするツール です。
 WebJob の実行に必要な Azure アクセストークンを取得し、ユーザーの選択に基づいて WebJob を実行 します。
 
-
+Webjob.Poc.exe %*
 # 使い方
 ## 1. 実行する WebJob のリストを appsettings.json に定義
 ```json
