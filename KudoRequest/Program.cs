@@ -19,16 +19,6 @@ class Program
                 .SetBasePath(Directory.GetCurrentDirectory()) // 実行ディレクトリを指定
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // JSON 設定を読み込む
                 .Build();
-           
-            Console.WriteLine($"アクセストークンを取得します。");
-            var token = await GetAzureAccessToken();
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("トークンの取得に失敗しました。");
-                return;
-            }
-
-            Console.WriteLine($"取得したトークン: {token.Substring(0, 20)}...\n");
 
             var webJobs = config.GetSection("KuduSettings:WebJobs").Get<List<WebJob>>();
             Console.WriteLine("実行する WebJob を選択してください:");
@@ -43,6 +33,7 @@ class Program
             if (!int.TryParse(input, out int selectedId))
             {
                 Console.WriteLine("無効な入力です。終了します。");
+                End();
                 return;
             }
 
@@ -51,6 +42,7 @@ class Program
             if (selectedJob == null)
             {
                 Console.WriteLine("選択された WebJob が見つかりません。");
+                End();
                 return;
             }
             var webjobStrategy = WebJobStrategyFactory.GetStrategy(selectedJob.Name, webJobs);
@@ -58,6 +50,7 @@ class Program
             if (string.IsNullOrWhiteSpace(param))
             {
                 Console.WriteLine($"実行するパラメータが設定されていません。\nパラメータ未設定の状態で実行することはできません。");
+                End();
                 return;
             }
             Console.WriteLine($"実行するパラメータ: {param}");
@@ -75,7 +68,7 @@ class Program
                 if (confirmation2 == "yes")
                 {
                     // 3. WebJob を実行
-                    await ExecuteWebJob(kuduUrl!, token);
+                    await ExecuteWebJob(kuduUrl!, config["Token"]!);
                     
                 }
                 else
@@ -94,6 +87,11 @@ class Program
         {
             Console.WriteLine($"エラー発生: {ex.Message}");
         }
+        End();
+    }
+
+    static void End()
+    {
         Console.WriteLine("処理が完了しました。終了するには `end` と入力してください...");
         while (true)
         {
@@ -103,43 +101,6 @@ class Program
                 break;
             }
             Console.WriteLine("終了するには `end` と入力してください...");
-        }
-    }
-
-    static async Task<string> GetAzureAccessToken()
-    {
-        try
-        {
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = "/c az account get-access-token --resource https://management.azure.com --query accessToken -o tsv",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (Process process = new Process { StartInfo = psi })
-            {
-                process.Start();
-                string output = await process.StandardOutput.ReadToEndAsync();
-                string error = await process.StandardError.ReadToEndAsync();
-                process.WaitForExit();
-
-                if (!string.IsNullOrEmpty(error))
-                {
-                    Console.WriteLine($"トークン取得エラー: {error}");
-                    return string.Empty;
-                }
-
-                return output.Trim();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"トークン取得中にエラー発生: {ex.Message}");
-            return string.Empty;
         }
     }
 
