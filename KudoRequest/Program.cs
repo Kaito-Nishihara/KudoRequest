@@ -30,7 +30,7 @@ class Program
             }
 
             Console.Write("選択（番号）: ");
-            string input = Console.ReadLine()!;
+            var input = Console.ReadLine()!;
 
             if (!int.TryParse(input, out int selectedId))
             {
@@ -97,7 +97,7 @@ class Program
         Console.WriteLine("処理が完了しました。終了するには `end` と入力してください...");
         while (true)
         {
-            string? input = Console.ReadLine();
+            var input = Console.ReadLine();
             if (input?.Trim().ToLower() == "end")
             {
                 break;
@@ -114,7 +114,7 @@ class Program
             client.DefaultRequestHeaders.Add("Accept", "application/json");
 
             HttpResponseMessage response = await client.PostAsync(kuduUrl, null);
-            string logMessage = $"[{DateTime.Now}] WebJob: {jobName}\nURL: {kuduUrl}\n";
+            var logMessage = $"[{DateTime.Now}] WebJob: {jobName}\nURL: {kuduUrl}\n";
 
             if (response.IsSuccessStatusCode)
             {
@@ -122,8 +122,8 @@ class Program
 
                 if (response.Headers.Contains("Location"))
                 {
-                    string runUrl = response.Headers.Location?.ToString() ?? "";
-                    string runId = runUrl.Split('/').Last();
+                    var runUrl = response.Headers.Location?.ToString() ?? "";
+                    var runId = runUrl.Split('/').Last();
 
                     Console.WriteLine($"\nWebJob の実行履歴 URL: {runUrl}");
                     Console.WriteLine($"WebJob Run ID: {runId}");
@@ -138,7 +138,7 @@ class Program
             }
             else
             {
-                string errorMessage = await response.Content.ReadAsStringAsync();
+                var errorMessage = await response.Content.ReadAsStringAsync();
                 Console.WriteLine($"WebJob 実行リクエスト失敗しました。: {response.StatusCode} - {errorMessage}");
                 logMessage += $"失敗 ({response.StatusCode}) - {errorMessage}\n";
             }
